@@ -37,7 +37,7 @@ class UserRepository:
             User.friends)).where(User.id == user_id)
         coro = await self.session.execute(q)
         user = coro.scalar()
-        if not user:
+        if user is None:
             return None
 
         return UserRead.model_validate(user, from_attributes=True)
@@ -46,9 +46,6 @@ class UserRepository:
         q = select(User)
         coro = await self.session.execute(q)
         users = coro.scalars().all()
-        if not users:
-            return None
-
         return [UserRead.model_validate(u, from_attributes=True) for u in users]
 
 

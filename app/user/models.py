@@ -1,4 +1,5 @@
 from typing import List
+from app.auth.models import RefreshToken
 from app.models import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Table, Column, ForeignKey
@@ -27,5 +28,12 @@ class User(Base):
         primaryjoin=id == friends_association.c.user_id,
         secondaryjoin=id == friends_association.c.friend_id,
         backref="friend_of",
+        lazy="noload"
+    )
+
+    refresh_token: Mapped["RefreshToken"] = relationship(
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
         lazy="noload"
     )

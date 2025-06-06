@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app.user.router import user_router, users_router
+from app.auth.router import auth_router
 from app.db import start_db, stop_db
 
 
@@ -17,5 +18,6 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(users_router)
