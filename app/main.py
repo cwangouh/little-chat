@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.user.router import user_router
+from app.user.router import user_router, users_router
 from app.db import start_db, stop_db
 
 
@@ -18,3 +18,4 @@ app = FastAPI(
 )
 
 app.include_router(user_router)
+app.include_router(users_router)

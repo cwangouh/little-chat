@@ -27,5 +27,5 @@ class User(Base):
         primaryjoin=id == friends_association.c.user_id,
         secondaryjoin=id == friends_association.c.friend_id,
         backref="friend_of",
-        lazy="joined"
+        lazy="noload"
     )

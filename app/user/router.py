@@ -1,13 +1,14 @@
-from typing import Annotated
+from typing import Annotated, List
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from starlette import status
 
 from app.repository.user import UserRepository, get_user_repo
-from app.user.schemas import UserCreate, UserCreateResponse, UserPublic, UserPublicWithFriends, UserRead
+from app.user.schemas import UserCreate, UserCreateResponse, UserPublic, UserPublicWithFriends, UserRead, UsersPublic
 
 
 user_router = APIRouter(prefix="/user")
+users_router = APIRouter(prefix="/users")
 
 
 @user_router.post(
@@ -33,6 +34,20 @@ async def get_user(
 ):
     user = await user_repo.get_user_by_id(user_id)
     if not user:
-        raise ValueError() # TODO: impl err handling
+        raise ValueError()  # TODO: impl err handling
 
     return UserPublicWithFriends(**user.model_dump())
+
+
+@users_router.get(
+    path="",
+    response_model=UsersPublic,
+    status_code=status.HTTP_200_OK
+)
+async def get_users(user_repo: Annotated[UserRepository, Depends(get_user_repo)]):
+    users: List[UserRead] = await user_repo.get_users()
+    if not users:
+        raise ValueError()  # TODO: impl err handling
+
+    users_public = [UserPublic(**u.model_dump()) for u in users]
+    return UsersPublic(users=users_public)

@@ -1,2 +1,3 @@
 # little-chat
-Just little chat, nothing else
+
+Just a little chat, nothing else
