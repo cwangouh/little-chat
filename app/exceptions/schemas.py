@@ -13,6 +13,10 @@ class ErrorContent(BaseModel):
     details: dict
 
 
-class NotFoundDetails(BaseModel):
+class NotFoundErrorDetails(BaseModel):
     entity: str
     entity_id: int
+    
+class IntegrityErrorDetails(BaseModel):
+    entity: str
+    is_uniqueness: bool

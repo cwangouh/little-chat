@@ -52,7 +52,7 @@ async def handle_http_exception(request: Request, exc: HTTPException):
 async def handle_sqlalchemy_error(request: Request, exc: SQLAlchemyError):
     # TODO: logging
     return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=AppException(
             code=Codes.DB_ERROR,
             message="Database error",
@@ -63,7 +63,7 @@ async def handle_sqlalchemy_error(request: Request, exc: SQLAlchemyError):
 async def handle_value_error(request: Request, exc: ValueError):
     # TODO: logging
     return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content=AppException(
             code=Codes.BAD_VALUE, message="Internal Server Error"
         ).as_dict(),

@@ -9,3 +9,4 @@ class Codes(str, Enum):
     DB_ERROR = 4
     HTTP_ERROR = 5
     BAD_VALUE = 6
+    INTEGRITY_ERROR = 7
