@@ -1,8 +1,8 @@
 from typing import Annotated, List
 from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse
 from starlette import status
 
+from app.exceptions.exceptions import NotFoundError
 from app.repository.user import UserRepository, get_user_repo
 from app.user.schemas import UserCreate, UserCreateResponse, UserPublic, UserPublicWithFriends, UserRead, UsersPublic
 
@@ -34,7 +34,7 @@ async def get_user(
 ):
     user = await user_repo.get_user_by_id(user_id)
     if not user:
-        raise ValueError()  # TODO: impl err handling
+        raise NotFoundError(entity="user", entity_id=user_id)
 
     return UserPublicWithFriends(**user.model_dump())
 

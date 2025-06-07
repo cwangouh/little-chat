@@ -3,9 +3,8 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import IntegrityError
 
-from app.auth.models import RefreshToken as RefreshTokenModel
+from app.models import RefreshToken as RefreshTokenModel
 from app.auth.schemas import RefreshToken as RefreshTokenSchema
 from app.db import get_async_session
 

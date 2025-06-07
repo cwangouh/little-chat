@@ -3,11 +3,16 @@ from fastapi import APIRouter
 auth_router = APIRouter(prefix="/auth")
 
 
-@auth_router.get(path="/token")
+@auth_router.post(path="/token")
 async def get_token():
     pass
 
 
-@auth_router.get(path="/token/refresh")
+@auth_router.post(path="/token/refresh")
 async def get_token():
+    pass
+
+
+@auth_router.post(path="/logout")
+async def logout():
     pass

@@ -1,0 +1,11 @@
+from enum import Enum
+
+
+class Codes(str, Enum):
+    UNKNOWN_ERROR = 0
+    NOT_FOUND_ERROR = 1
+    REQUEST_VALIDATION_ERROR = 2
+    PYDANTIC_VALIDATION_ERROR = 3
+    DB_ERROR = 4
+    HTTP_ERROR = 5
+    BAD_VALUE = 6

@@ -6,8 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.db import get_async_session
-from app.user.models import User
-from app.user.schemas import UserCreateResponse, UserPublic, UserRead, UsersPublic
+from app.models import User
+from app.user.schemas import UserCreateResponse, UserRead
 
 
 class UserRepository:
