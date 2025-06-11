@@ -13,6 +13,9 @@ from app.exceptions.schemas import (
 
 
 class AppException(Exception):
+    warnings: list[str] = []
+    logs: list[str] = []
+
     def __init__(
         self,
         code: str,
@@ -20,7 +23,6 @@ class AppException(Exception):
         status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
         details: dict | None = None,
     ) -> None:
-        self.warnings: list[str] = []
         self.status_code = status_code
 
         self.code = code
@@ -49,14 +51,21 @@ class NotFoundError(AppException):
 
 
 class IntegrityError(AppException):
+    SQLSTATE_RESTRICT = "23001"
+    SQLSTATE_NOT_NULL = "23502"
+    SQLSTATE_FOREIGN_KEY = "23503"
+    SQLSTATE_UNIQUE = "23505"
+    SQLSTATE_CHECK = "23514"
+
     def __init__(self, entity: str, orig: Any):
         is_uniqueness = False
-        if isinstance(orig, IntegrityConstraintViolationError):
-            if isinstance(orig, UniqueViolationError):
+        if hasattr(orig, "sqlstate"):
+            self.logs.append(f"Constraint violated: sqlstate={orig.sqlstate}")
+            if orig.sqlstate == self.SQLSTATE_UNIQUE:
                 is_uniqueness = True
         else:
             self.warnings.append(
-                f"Cannot derive type of constraint in IntegrityError due to unknown DB driver. Orig class: {type(orig).__name__}"
+                f"Cannot derive the constraint violated: unexpected error type {type(orig).__name__}"
             )
 
         details = IntegrityErrorDetails(entity=entity, is_uniqueness=is_uniqueness)

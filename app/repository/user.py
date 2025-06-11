@@ -22,14 +22,11 @@ class UserRepository:
         surname: str,
         tag: str,
     ) -> UserCreateResponse:
-        user = User(first_name=first_name, surname=surname, tag=tag)
-        self.session.add(user)
-
         try:
-            await self.session.flush()
-            await self.session.commit()
+            async with self.session.begin():
+                user = User(first_name=first_name, surname=surname, tag=tag)
+                self.session.add(user)
         except SQLAlchemyIntegrityError as ie:
-            await self.session.rollback()
             raise IntegrityError(entity="user", orig=ie.orig) from ie
 
         return UserCreateResponse.model_validate(user, from_attributes=True)
