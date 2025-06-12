@@ -10,6 +10,6 @@ class TokenData(BaseModel):
     user_id: int | None = None
 
 
-class RefreshToken(BaseModel):
+class RefreshTokenRead(BaseModel):
     user_id: int
     token: str

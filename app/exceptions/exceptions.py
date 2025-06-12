@@ -21,12 +21,14 @@ class AppException(Exception):
         message: str,
         status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
         details: dict | None = None,
+        headers: dict | None = None,
     ) -> None:
         self.status_code = status_code
 
         self.code = code
         self.message = message
         self.details = details or {}
+        self.headers = headers
 
         self.response = ErrorResponse(
             error=ErrorContent(
@@ -36,6 +38,16 @@ class AppException(Exception):
 
     def as_dict(self) -> dict:
         return self.response.model_dump()
+
+
+class InvalidTokenException(AppException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
+            code=Codes.INVALID_TOKEN,
+            message="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 class NotFoundError(AppException):

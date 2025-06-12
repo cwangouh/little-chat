@@ -40,6 +40,15 @@ class UserRepository:
 
         return UserRead.model_validate(user, from_attributes=True)
 
+    async def get_user_by_tag(self, tag: str) -> UserRead | None:
+        q = select(User).options(selectinload(User.friends)).where(User.tag == tag)
+        coro = await self.session.execute(q)
+        user = coro.scalar()
+        if user is None:
+            return None
+
+        return UserRead.model_validate(user, from_attributes=True)
+
     async def get_users(self) -> List[UserRead] | None:
         q = select(User)
         coro = await self.session.execute(q)

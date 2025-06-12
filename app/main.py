@@ -2,6 +2,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
+
+from app.auth.router import auth_router
+from app.db import start_db, stop_db
 from app.exceptions.exceptions import AppException
 from app.exceptions.handlers import (
     handle_app_exception,
@@ -13,8 +16,6 @@ from app.exceptions.handlers import (
     handle_value_error,
 )
 from app.user.router import user_router, users_router
-from app.auth.router import auth_router
-from app.db import start_db, stop_db
 
 
 async def lifespan(app: FastAPI):

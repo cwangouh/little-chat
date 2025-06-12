@@ -21,7 +21,7 @@ class UserCreateResponse(IdCreateResponse):
 
 class UserRead(UserBase):
     id: int
-    # password_hashed: str
+    password_hashed: str
     friends: List["UserRead"]
 
 

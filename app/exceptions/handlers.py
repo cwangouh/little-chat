@@ -39,7 +39,9 @@ async def handle_app_exception(request: Request, exc: AppException):
         warnings=exc.warnings,
         logs=exc.logs,
     )
-    return JSONResponse(status_code=exc.status_code, content=exc.as_dict())
+    return JSONResponse(
+        status_code=exc.status_code, headers=exc.headers, content=exc.as_dict()
+    )
 
 
 async def handle_request_validation_error(

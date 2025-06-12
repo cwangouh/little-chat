@@ -10,3 +10,5 @@ class Codes(str, Enum):
     HTTP_ERROR = 5
     BAD_VALUE = 6
     INTEGRITY_ERROR = 7
+    INVALID_TOKEN = 8
+    INCORRECT_CREDENTIALS = 9
