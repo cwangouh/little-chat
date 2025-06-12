@@ -1,6 +1,5 @@
 from typing import Any
 
-from asyncpg.exceptions import IntegrityConstraintViolationError, UniqueViolationError
 from starlette import status
 
 from app.exceptions.codes import Codes
