@@ -16,9 +16,8 @@ from app.config import (
     REFRESH_TOKEN_EXPIRE_MINUTES,
     SECRET_KEY,
 )
-from app.exceptions import CredentialsException, InnerCodes
 from app.exceptions.codes import Codes
-from app.exceptions.exceptions import AppException
+from app.exceptions.exceptions import AppException, InvalidTokenException
 from app.repository.refresh_token import RefreshTokenRepository, get_refresh_token_repo
 from app.repository.user import UserRepository, get_user_repo
 
@@ -53,7 +52,7 @@ async def generate_access_and_refresh_tokens(
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_jwt_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"sub": user.tag}, expires_delta=access_token_expires
     )
 
     response = Response()
@@ -68,26 +67,19 @@ async def get_refresh_token(
         RefreshTokenRepository, Depends(get_refresh_token_repo)
     ],
 ):
-    invalid_token = CredentialsException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        inner_code=InnerCodes.INVALID_TOKEN,
-        message="Invalid token",
-    )
-
+    invalid_token = InvalidTokenException()
     try:
         payload = jwt.decode(
             token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_exp": False}
         )
-        username: str = payload.get("sub")
-        if username is None:
+        tag: str = payload.get("sub")
+        if tag is None:
             raise invalid_token
 
     except InvalidTokenError as e:
         raise invalid_token from e
 
-    refresh_token = await refresh_token_repo.get_refresh_token_by_username(
-        username=username
-    )
+    refresh_token = await refresh_token_repo.get_refresh_token_by_user_tag(tag=tag)
     if not refresh_token:
         raise invalid_token
 
@@ -100,14 +92,14 @@ async def get_refresh_token(
 
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_jwt_token(
-            data={"sub": username}, expires_delta=access_token_expires
+            data={"sub": tag}, expires_delta=access_token_expires
         )
 
         response = Response()
         response.set_cookie(key="jwt", value=f"Bearer {access_token}", httponly=True)
         return response
     except InvalidTokenError as e:
-        await refresh_token_repo.delete_refresh_token_by_username(username=username)
+        await refresh_token_repo.delete_refresh_token_by_user_tag(tag=tag)
         raise invalid_token from e
 
 
@@ -118,26 +110,19 @@ async def log_out_from_system(
         RefreshTokenRepository, Depends(get_refresh_token_repo)
     ],
 ):
-    invalid_token = CredentialsException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        inner_code=InnerCodes.INVALID_TOKEN,
-        message="Invalid token",
-    )
-
+    invalid_token = InvalidTokenException()
     try:
         payload = jwt.decode(
             token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_exp": False}
         )
-        username: str = payload.get("sub")
-        if username is None:
+        tag: str = payload.get("sub")
+        if tag is None:
             raise invalid_token
 
     except InvalidTokenError as e:
         raise invalid_token from e
 
-    result = await refresh_token_repo.delete_refresh_token_by_username(
-        username=username
-    )
+    result = await refresh_token_repo.delete_refresh_token_by_user_tag(tag=tag)
 
     response = JSONResponse(content={"result": result})
     response.delete_cookie(key="jwt", httponly=True)

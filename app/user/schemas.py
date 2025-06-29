@@ -11,8 +11,8 @@ class UserBase(GeneralSchema):
     tag: str
 
 
-class UserCreate(UserBase):  # TODO: add password here later
-    pass
+class UserCreate(UserBase):
+    password: str
 
 
 class UserCreateResponse(IdCreateResponse):

@@ -25,6 +25,7 @@ class User(Base):
     first_name: Mapped[str] = mapped_column(nullable=False)
     surname: Mapped[str] = mapped_column(nullable=False)
     tag: Mapped[str] = mapped_column(nullable=False, unique=True)
+    password_hashed: Mapped[str] = mapped_column(nullable=False)
 
     friends: Mapped[List["User"]] = relationship(
         "User",

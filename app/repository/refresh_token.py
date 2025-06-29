@@ -25,20 +25,20 @@ class RefreshTokenRepository:
 
         return RefreshTokenRead.model_validate(refresh_token, from_attributes=True)
 
-    async def delete_refresh_token_by_username(self, user_id: int) -> bool:
+    async def delete_refresh_token_by_user_id(self, user_id: int) -> bool:
+        stmt = delete(RefreshToken).where(RefreshToken.user_id == user_id)
         async with self.session.begin():
-            stmt = delete(RefreshToken).where(RefreshToken.user_id == user_id)
             result = await self.session.execute(stmt)
 
         return result.rowcount > 0
 
     async def delete_refresh_token_by_user_tag(self, tag: str) -> bool:
-        delete_stmt = delete(RefreshToken).where(
+        stmt = delete(RefreshToken).where(
             RefreshToken.user_id
             == select(User.id).where(User.tag == tag).scalar_subquery()
         )
         async with self.session.begin():
-            result = await self.session.execute(delete_stmt)
+            result = await self.session.execute(stmt)
 
         return result.rowcount > 0
 
@@ -46,6 +46,18 @@ class RefreshTokenRepository:
         self, user_id: int
     ) -> RefreshTokenRead | None:
         query = select(RefreshToken).where(RefreshToken.user_id == user_id)
+
+        refresh_token = (await self.session.execute(query)).scalar()
+        if refresh_token is None:
+            return None
+
+        return RefreshTokenRead.model_validate(refresh_token, from_attributes=True)
+
+    async def get_refresh_token_by_user_tag(self, tag: str) -> RefreshTokenRead | None:
+        query = select(RefreshToken).where(
+            RefreshToken.user_id
+            == select(User.id).where(User.tag == tag).scalar_subquery()
+        )
 
         refresh_token = (await self.session.execute(query)).scalar()
         if refresh_token is None:

@@ -3,6 +3,7 @@ from typing import Annotated, List
 from fastapi import APIRouter, Depends
 from starlette import status
 
+from app.auth.utils import get_password_hash
 from app.exceptions.exceptions import NotFoundError
 from app.repository.user import UserRepository, get_user_repo
 from app.user.schemas import (
@@ -24,7 +25,12 @@ users_router = APIRouter(prefix="/users")
 async def create_user(
     user_data: UserCreate, user_repo: Annotated[UserRepository, Depends(get_user_repo)]
 ):
-    return await user_repo.insert_user(**user_data.model_dump())
+    return await user_repo.insert_user(
+        first_name=user_data.first_name,
+        surname=user_data.surname,
+        tag=user_data.tag,
+        password_hashed=get_password_hash(user_data.password),
+    )
 
 
 @user_router.get(

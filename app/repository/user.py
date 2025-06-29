@@ -17,14 +17,16 @@ class UserRepository:
         self.session = session
 
     async def insert_user(
-        self,
-        first_name: str,
-        surname: str,
-        tag: str,
+        self, first_name: str, surname: str, tag: str, password_hashed: str
     ) -> UserCreateResponse:
         try:
             async with self.session.begin():
-                user = User(first_name=first_name, surname=surname, tag=tag)
+                user = User(
+                    first_name=first_name,
+                    surname=surname,
+                    tag=tag,
+                    password_hashed=password_hashed,
+                )
                 self.session.add(user)
         except SQLAlchemyIntegrityError as ie:
             raise IntegrityError(entity="user", orig=ie.orig) from ie
@@ -42,10 +44,12 @@ class UserRepository:
 
     async def get_user_by_tag(self, tag: str) -> UserRead | None:
         q = select(User).options(selectinload(User.friends)).where(User.tag == tag)
-        coro = await self.session.execute(q)
-        user = coro.scalar()
-        if user is None:
-            return None
+        async with self.session.begin():
+            coro = await self.session.execute(q)
+
+            user = coro.scalar()
+            if user is None:
+                return None
 
         return UserRead.model_validate(user, from_attributes=True)
 
