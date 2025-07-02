@@ -1,11 +1,11 @@
 import './App.css'
-import Chat from './chat/Chat'
+import ChatScreen from './chat/ChatScreen'
 
 function App() {
   return <>
     {/* <Login /> */}
     {/* <SingUpForm /> */}
-    <Chat />
+    <ChatScreen />
   </>
 }
 
