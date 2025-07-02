@@ -14,6 +14,10 @@ function SingUpForm() {
             >
                 Sing up
             </button>
+
+            <span className="block text-xs text-center pt-4">
+                Log in if you have an account
+            </span>
         </FormContainer>
     )
 }

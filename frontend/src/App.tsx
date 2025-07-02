@@ -1,11 +1,9 @@
+import { Outlet } from 'react-router-dom'
 import './App.css'
-import ChatScreen from './chat/ChatScreen'
 
 function App() {
   return <>
-    {/* <Login /> */}
-    {/* <SingUpForm /> */}
-    <ChatScreen />
+    <Outlet />
   </>
 }
 

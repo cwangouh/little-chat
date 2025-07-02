@@ -1,4 +1,4 @@
-import ChatPanel from "./ChatPanel"
+import { Outlet } from "react-router-dom"
 import Header from "./Header"
 import Menu from "./Menu"
 
@@ -7,7 +7,7 @@ function ChatScreen() {
         <Header />
         <div className="max-h-160 flex flex-row gap-0">
             <Menu />
-            <ChatPanel />
+            <Outlet />
         </div>
     </div>
 }

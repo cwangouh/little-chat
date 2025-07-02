@@ -33,6 +33,16 @@ const InputPanel: React.FC = () => {
     </>
 }
 
+export const ChatPanelPlaceholder: React.FC = () => {
+    return <>
+        <div className="min-w-45 border-1 border-l-0 border-gray-300 flex-1">
+            <div className="h-full flex flex-col justify-center">
+                <span className="text-4xl font-bold">&lt;- Choose a chat</span>
+            </div>
+        </div>
+    </>
+}
+
 const ChatPanel: React.FC = () => {
     return <div className="min-w-45 border-1 border-l-0 border-gray-300 flex-1">
         <div className="w-full h-full flex flex-col">
