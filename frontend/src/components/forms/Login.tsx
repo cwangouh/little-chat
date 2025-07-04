@@ -1,3 +1,5 @@
+import { BoldLink } from "./Common"
+
 function LoginForm() {
     return (
         <div className="max-w-sm mx-auto bg-amber-100 rounded-2xl shadow-md p-6">
@@ -34,7 +36,7 @@ function LoginForm() {
             </form>
 
             <span className="block text-xs text-center pt-4">
-                Or register if you don't have an account
+                Or <BoldLink to="/signup">sign up</BoldLink> if you don't have an account
             </span>
         </div>
     )

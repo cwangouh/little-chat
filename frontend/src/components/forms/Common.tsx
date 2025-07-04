@@ -1,4 +1,13 @@
 import React, { type ReactNode } from "react";
+import { Link, type FetcherWithComponents, type LinkProps } from "react-router-dom";
+
+
+export const BoldLink: React.FC<LinkProps & React.RefAttributes<HTMLAnchorElement>> =
+    ({ to, children }) => {
+        return <>
+            <Link to={to} className="font-bold underline hover:text-gray-700">{children}</Link>
+        </>
+    }
 
 interface InputFieldProps {
     id: string;
@@ -21,6 +30,7 @@ export const InputField: React.FC<InputFieldProps> = ({
         </label>
         <input
             id={id}
+            name={id}
             type={type}
             value={value}
             onChange={onChange}
@@ -38,14 +48,11 @@ interface FormContainerProps {
 export const FormContainer: React.FC<FormContainerProps> = ({
     title,
     children,
-    onSubmit,
 }) => {
     return (
         <div className="max-w-sm mx-auto bg-amber-100 rounded-2xl shadow-md p-6">
             <h3 className="text-xl font-bold underline mb-4 text-center">{title}</h3>
-            <form className="flex flex-col gap-4" onSubmit={onSubmit}>
-                {children}
-            </form>
+            {children}
         </div>
     );
 };
