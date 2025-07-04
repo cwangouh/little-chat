@@ -1,11 +1,9 @@
 from typing import Annotated, List
 
-from fastapi import APIRouter, Depends
-from starlette import status
-
 from app.auth.utils import get_password_hash
 from app.exceptions.exceptions import NotFoundError
 from app.repository.user import UserRepository, get_user_repo
+from app.schemas import OkResponse
 from app.user.schemas import (
     UserCreate,
     UserCreateResponse,
@@ -14,23 +12,27 @@ from app.user.schemas import (
     UserRead,
     UsersPublic,
 )
+from fastapi import APIRouter, Depends
+from starlette import status
 
 user_router = APIRouter(prefix="/user")
 users_router = APIRouter(prefix="/users")
 
 
 @user_router.post(
-    path="", response_model=UserCreateResponse, status_code=status.HTTP_201_CREATED
+    path="", response_model=OkResponse, status_code=status.HTTP_201_CREATED
 )
 async def create_user(
     user_data: UserCreate, user_repo: Annotated[UserRepository, Depends(get_user_repo)]
 ):
-    return await user_repo.insert_user(
+    await user_repo.insert_user(
         first_name=user_data.first_name,
         surname=user_data.surname,
         tag=user_data.tag,
         password_hashed=get_password_hash(user_data.password),
     )
+
+    return OkResponse(ok=True)
 
 
 @user_router.get(

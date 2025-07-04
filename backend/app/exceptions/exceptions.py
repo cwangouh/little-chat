@@ -25,7 +25,7 @@ class AppException(Exception):
     ) -> None:
         self.status_code = status_code
 
-        self.code = code
+        self.code = code  # TODO: check if details correspond to code
         self.message = message
         self.details = details or {}
         self.headers = headers
