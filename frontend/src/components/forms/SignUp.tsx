@@ -1,12 +1,46 @@
 import { useFetcher } from "react-router-dom";
-import { BoldLink, FormContainer, InputField } from "./Common";
+import { Codes } from "../../fetches/codes";
+import type { AppResponse, AppResponseError } from "../../fetches/responses";
+import { BoldLink, ErrorBar, FormContainer, InputField } from "./Common";
+
+
+interface SignUpErrorBar {
+    error?: AppResponseError
+}
+
+const SingUpErrorBar: React.FC<SignUpErrorBar> = ({ error }) => {
+    if (!error) {
+        return <></>
+    }
+
+    let text = "";
+    switch (Number(error.code)) {
+        case Codes.REQUEST_VALIDATION_ERROR:
+        case Codes.PYDANTIC_VALIDATION_ERROR:
+            // TODO: Make it smarter
+            console.log("KEK")
+            text = "Wrong format of the entered data."
+            break;
+
+        case Codes.INTEGRITY_ERROR:
+            text = "This tag is already in use."
+            break;
+
+        default:
+            return <></>
+    }
+
+
+    return <ErrorBar text={text} />
+}
 
 
 function SingUpForm() {
-    let fetcher = useFetcher();
+    let fetcher = useFetcher<AppResponse>();
 
     return <>
         <FormContainer title="Sign Up">
+            {!fetcher.data?.ok && fetcher.data?.data?.error && <SingUpErrorBar error={fetcher.data?.data?.error} />}
             <fetcher.Form method="post" className="flex flex-col gap-4">
                 <InputField id="first_name" label="First name" />
                 <InputField id="surname" label="Surname" />
@@ -23,7 +57,6 @@ function SingUpForm() {
                 <BoldLink to="/">Log in</BoldLink> if you have an account
             </span>
         </FormContainer>
-        {JSON.stringify(fetcher.data, null, 2)}
     </>
 }
 

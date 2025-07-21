@@ -9,6 +9,20 @@ export const BoldLink: React.FC<LinkProps & React.RefAttributes<HTMLAnchorElemen
         </>
     }
 
+
+interface ErrorBarProps {
+    text: string
+}
+
+export const ErrorBar: React.FC<ErrorBarProps> = ({ text }) => {
+    return <div className="flex flex-row gap-3 items-center my-3 px-2 rounded bg-red-200">
+        <div className="font-bold text-3xl">!!!</div>
+        <div>
+            <span>{text}</span>
+        </div>
+    </div>
+}
+
 interface InputFieldProps {
     id: string;
     label: string;

@@ -1,3 +1,5 @@
+import type { StatusCodes } from "http-status-codes";
+
 export const Codes = {
     UNKNOWN_ERROR: 0,
     NOT_FOUND_ERROR: 1,
@@ -12,3 +14,5 @@ export const Codes = {
 } as const;
 
 export type Code = (typeof Codes)[keyof typeof Codes];
+
+export type HttpStatusCode = (typeof StatusCodes)[keyof typeof StatusCodes];

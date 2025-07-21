@@ -1,9 +1,9 @@
-import type { ActionFunctionArgs } from "react-router-dom";
-import type { AppResponse } from "./responses";
+import { StatusCodes } from "http-status-codes";
+import { redirect, type ActionFunctionArgs } from "react-router-dom";
 
 
 
-export async function signUpAction({ request }: ActionFunctionArgs): Promise<AppResponse> {
+export async function signUpAction({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
 
     const payload = {
@@ -23,12 +23,17 @@ export async function signUpAction({ request }: ActionFunctionArgs): Promise<App
             credentials: "include"
         });
 
+        if (response.status == StatusCodes.CREATED) {
+            return redirect("/chat");
+        }
+
         const data = await response.json();
         return {
             ok: response.ok,
             status: response.status,
             data,
         };
+
     } catch (error) {
         // LOG IT
         return {

@@ -1,11 +1,9 @@
-import { Codes, type Code } from "./codes";
+import { Codes, type Code, type HttpStatusCode } from "./codes";
 
-export interface AppResponse {
-    ok: boolean,
-    status?: number,
-    message?: string,
-    data?: AppResponseData | AppResponseErrorData
-}
+
+export type AppResponse =
+    | { ok: true, status?: HttpStatusCode, message?: string, data: AppResponseData }
+    | { ok: false, status?: HttpStatusCode, message?: string, data?: AppResponseErrorData };
 
 export interface AppResponseData { }
 
@@ -22,7 +20,7 @@ export interface AppResponseErrorData {
 // Specifies the details which should be used for error codes
 type ErrorDetailsMap = {
     [Codes.PYDANTIC_VALIDATION_ERROR]: ValidationErrorDetails;
-    [Codes.REQUEST_VALIDATION_ERROR]: RequestValidationErrorDetails;
+    [Codes.REQUEST_VALIDATION_ERROR]: ValidationErrorDetails;
     [Codes.INTEGRITY_ERROR]: IntegrityErrorDetails;
     [Codes.NOT_FOUND_ERROR]: NotFoundErrorDetails;
 };
