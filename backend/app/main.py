@@ -53,7 +53,7 @@ app.include_router(users_router)
 
 app.exception_handler(AppException)(handle_app_exception)
 app.exception_handler(RequestValidationError)(handle_request_validation_error)
-app.exception_handler(ValidationError)(handle_validation_error)
+# app.exception_handler(ValidationError)(handle_validation_error)
 app.exception_handler(HTTPException)(handle_http_exception)
 app.exception_handler(SQLAlchemyError)(handle_sqlalchemy_error)
 app.exception_handler(ValueError)(handle_value_error)
