@@ -1,13 +1,20 @@
 from datetime import datetime, timezone
+from enum import Enum
 from typing import List, Optional
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Table
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 def utcnow():
     return datetime.now(timezone.utc)
+
+
+class ConversationType(str, Enum):
+    CHAT = "chat"
+    GROUP = "group"
 
 
 class Base(AsyncAttrs, DeclarativeBase):
@@ -17,8 +24,8 @@ class Base(AsyncAttrs, DeclarativeBase):
 contacts_association = Table(
     "contacts_association",
     Base.metadata,
-    Column("user_id", ForeignKey("users.id"), primary_key=True),
-    Column("contact_id", ForeignKey("users.id"), primary_key=True),
+    Column("user_id", ForeignKey("users.user_id"), primary_key=True),
+    Column("contact_id", ForeignKey("users.user_id"), primary_key=True),
 )
 
 
@@ -61,10 +68,6 @@ class Session(Base):
         String(255), nullable=False
     )
 
-    expires_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=utcnow,
@@ -83,11 +86,10 @@ class Conversation(Base):
     __tablename__ = "conversations"
 
     conversation_id: Mapped[int] = mapped_column(
-        primary_key=True, autoincrement=True
-    )
+        primary_key=True, autoincrement=True)
 
-    type: Mapped[str] = mapped_column(
-        String(400), nullable=False
+    type: Mapped[ConversationType] = mapped_column(
+        SQLEnum(ConversationType), nullable=False
     )
 
     created_at: Mapped[datetime] = mapped_column(
@@ -97,6 +99,12 @@ class Conversation(Base):
     )
 
     title: Mapped[Optional[str]] = mapped_column(String(255))
+
+    messages: Mapped[list["Message"]] = relationship(
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        lazy="noload",
+    )
 
 
 class Chat(Base):
@@ -153,10 +161,14 @@ class Message(Base):
 
     user: Mapped["User"] = relationship(lazy="noload")
     conversation: Mapped["Conversation"] = relationship(
-        back_populates="conversations",
-        uselist=True,
-        cascade="all, delete-orphan",
+        back_populates="messages",
         lazy="noload"
+    )
+
+    reactions: Mapped[list["Reaction"]] = relationship(
+        back_populates="message",
+        cascade="all, delete-orphan",
+        lazy="noload",
     )
 
 
@@ -189,8 +201,6 @@ class Reaction(Base):
 
     message: Mapped["Message"] = relationship(
         back_populates="reactions",
-        uselist=True,
-        cascade="all, delete-orphan",
         lazy="noload"
     )
     user: Mapped["User"] = relationship(lazy="noload")

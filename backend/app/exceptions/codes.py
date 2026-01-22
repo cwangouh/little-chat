@@ -12,3 +12,4 @@ class Codes(str, Enum):
     INTEGRITY_ERROR = 7
     INVALID_TOKEN = 8
     INCORRECT_CREDENTIALS = 9
+    NO_ACCESS = 10

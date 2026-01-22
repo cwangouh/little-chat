@@ -12,7 +12,7 @@ from app.config import (
 )
 from app.exceptions.codes import Codes
 from app.exceptions.exceptions import AppException, InvalidTokenException
-from app.repository.refresh_token import RefreshTokenRepository, get_refresh_token_repo
+from app.repository.session import SessionRepository, get_session_repo
 from app.repository.user import UserRepository, get_user_repo
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
@@ -27,8 +27,8 @@ auth_router = APIRouter(prefix="/auth")
 async def generate_access_and_refresh_tokens(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     user_repo: Annotated[UserRepository, Depends(get_user_repo)],
-    refresh_token_repo: Annotated[
-        RefreshTokenRepository, Depends(get_refresh_token_repo)
+    session_repo: Annotated[
+        SessionRepository, Depends(get_session_repo)
     ],
 ):
     user = await authenticate_user(
@@ -41,13 +41,13 @@ async def generate_access_and_refresh_tokens(
             message="Incorrect tag or password",
         )
 
-    await refresh_token_repo.delete_refresh_token_by_user_tag(tag=user.tag)
+    await session_repo.delete_session_by_user_tag(tag=user.tag)
 
     refresh_token_expires = timedelta(minutes=REFRESH_TOKEN_EXPIRE_MINUTES)
     refresh_token = create_jwt_token(
         data={"sub": user.tag}, expires_delta=refresh_token_expires
     )
-    await refresh_token_repo.insert_refresh_token(token=refresh_token, user_id=user.id)
+    await session_repo.insert_session(token=refresh_token, user_id=user.user_id)
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_jwt_token(
@@ -63,8 +63,8 @@ async def generate_access_and_refresh_tokens(
 @auth_router.post("/token/refresh", status_code=status.HTTP_201_CREATED)
 async def get_refresh_token(
     token: Annotated[str, Depends(get_formatted_token)],
-    refresh_token_repo: Annotated[
-        RefreshTokenRepository, Depends(get_refresh_token_repo)
+    session_repo: Annotated[
+        SessionRepository, Depends(get_session_repo)
     ],
 ):
     invalid_token = InvalidTokenException()
@@ -80,13 +80,13 @@ async def get_refresh_token(
     except InvalidTokenError as e:
         raise invalid_token from e
 
-    refresh_token = await refresh_token_repo.get_refresh_token_by_user_tag(tag=tag)
-    if not refresh_token:
+    session = await session_repo.get_session_by_user_tag(tag=tag)
+    if not session:
         raise invalid_token
 
     try:
         _ = jwt.decode(
-            refresh_token.token,
+            session.refresh_token,
             SECRET_KEY,
             algorithms=[ALGORITHM],
         )
@@ -101,15 +101,15 @@ async def get_refresh_token(
             key="jwt", value=f"Bearer {access_token}", httponly=True)
         return response
     except InvalidTokenError as e:
-        await refresh_token_repo.delete_refresh_token_by_user_tag(tag=tag)
+        await session_repo.delete_session_by_user_tag(tag=tag)
         raise invalid_token from e
 
 
 @auth_router.post("/logout", status_code=status.HTTP_200_OK)
 async def log_out_from_system(
     token: Annotated[str, Depends(get_formatted_token)],
-    refresh_token_repo: Annotated[
-        RefreshTokenRepository, Depends(get_refresh_token_repo)
+    session_repo: Annotated[
+        SessionRepository, Depends(get_session_repo)
     ],
 ):
     invalid_token = InvalidTokenException()
@@ -125,7 +125,7 @@ async def log_out_from_system(
     except InvalidTokenError as e:
         raise invalid_token from e
 
-    result = await refresh_token_repo.delete_refresh_token_by_user_tag(tag=tag)
+    result = await session_repo.delete_session_by_user_tag(tag=tag)
 
     response = JSONResponse(content={"result": result})
     response.delete_cookie(key="jwt", httponly=True)

@@ -1,3 +1,6 @@
+from app.exceptions.codes import Codes
+from app.exceptions.exceptions import AppException
+from app.logger import setup_logger
 from fastapi import HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -6,20 +9,19 @@ from sqlalchemy.exc import SQLAlchemyError
 from starlette import status
 from starlette.requests import Request
 
-from app.exceptions.codes import Codes
-from app.exceptions.exceptions import AppException
-from app.logger import setup_logger
-
 logger = setup_logger(__name__)
 
 
 def log_exception(
     request: Request,
     status_code: int,
+    exception: Exception,
     app_exception: AppException,
     logs: list[str] | None = None,
     warnings: list[str] | None = None,
 ):
+    print(exception)
+
     logger.error(
         f"{request.method} {request.url.path} | "
         f"Warnings: {warnings or []} | "
@@ -38,6 +40,7 @@ async def handle_app_exception(request: Request, exc: AppException):
         app_exception=exc,
         warnings=exc.warnings,
         logs=exc.logs,
+        exception=exc,
     )
     return JSONResponse(
         status_code=exc.status_code, headers=exc.headers, content=exc.as_dict()
@@ -58,6 +61,7 @@ async def handle_request_validation_error(
         request=request,
         status_code=status_code,
         app_exception=app_exception,
+        exception=exc,
     )
     return JSONResponse(
         status_code=status_code,
@@ -77,6 +81,7 @@ async def handle_validation_error(request: Request, exc: ValidationError):
         request=request,
         status_code=status_code,
         app_exception=app_exception,
+        exception=exc,
     )
     return JSONResponse(
         status_code=status_code,
@@ -96,6 +101,7 @@ async def handle_http_exception(request: Request, exc: HTTPException):
         request=request,
         status_code=status_code,
         app_exception=app_exception,
+        exception=exc,
     )
     return JSONResponse(
         status_code=status_code,
@@ -114,6 +120,7 @@ async def handle_sqlalchemy_error(request: Request, exc: SQLAlchemyError):
         request=request,
         status_code=status_code,
         app_exception=app_exception,
+        exception=exc,
     )
     return JSONResponse(
         status_code=status_code,
@@ -123,12 +130,14 @@ async def handle_sqlalchemy_error(request: Request, exc: SQLAlchemyError):
 
 async def handle_value_error(request: Request, exc: ValueError):
     status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
-    app_exception = AppException(code=Codes.BAD_VALUE, message="Internal Server Error")
+    app_exception = AppException(
+        code=Codes.BAD_VALUE, message="Internal Server Error")
 
     log_exception(
         request=request,
         status_code=status_code,
         app_exception=app_exception,
+        exception=exc,
     )
     return JSONResponse(
         status_code=status_code,
@@ -147,6 +156,7 @@ async def handle_global_exception(request: Request, exc: Exception):
         request=request,
         status_code=status_code,
         app_exception=app_exception,
+        exception=exc,
     )
     return JSONResponse(
         status_code=status_code,

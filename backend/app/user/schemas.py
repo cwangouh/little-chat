@@ -1,7 +1,7 @@
 import re
-from typing import List, Optional
+from typing import List
 
-from app.schemas import GeneralSchema, IdCreateResponse
+from app.schemas import GeneralSchema
 from pydantic import Field
 
 # --- User --- #
@@ -19,28 +19,18 @@ class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=40)
 
 
-class UserCreateResponse(IdCreateResponse):
-    pass
+class UserCreateResponse(GeneralSchema):
+    user_id: int
 
 
 class UserRead(UserBase):
-    id: int
+    user_id: int
     password_hashed: str
     contacts: List["UserRead"]
 
 
-class UserUpdate(GeneralSchema):
-    first_name: Optional[str] = None
-    surname: Optional[str] = None
-    tag: Optional[str] = None
-
-
-class UserDelete(GeneralSchema):
-    id: int
-
-
 class UserPublic(UserBase):
-    id: int
+    user_id: int
 
 
 class UserPublicWithContacts(UserPublic):
@@ -56,3 +46,7 @@ class UsersPublic(GeneralSchema):
 
 class UsersPublicWithContacts(GeneralSchema):
     users: List[UserPublicWithContacts]
+
+
+class UpdateProfile(GeneralSchema):
+    bio: str | None = None

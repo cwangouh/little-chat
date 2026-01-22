@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.auth.router import auth_router
+from app.chat.router import chat_router
 from app.db import start_db, stop_db
 from app.exceptions.exceptions import AppException
 from app.exceptions.handlers import (
@@ -52,6 +53,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(user_router)
+app.include_router(chat_router)
 
 
 app.exception_handler(AppException)(handle_app_exception)

@@ -34,7 +34,7 @@ class UserRepository:
 
     async def get_user_by_id(self, user_id: int) -> UserRead | None:
         q = select(User).options(selectinload(
-            User.contacts)).where(User.id == user_id)
+            User.contacts)).where(User.user_id == user_id)
         async with self.session.begin():
             coro = await self.session.execute(q)
 
@@ -61,6 +61,15 @@ class UserRepository:
         coro = await self.session.execute(q)
         users = coro.scalars().all()
         return [UserRead.model_validate(u, from_attributes=True) for u in users]
+
+    async def add_contact(self, user_id: int, contact_id: int) -> None:
+        raise NotImplementedError()
+
+    async def delete_contact(self, user_id: int, contact_id: int) -> None:
+        raise NotImplementedError()
+
+    async def update_user(self, user_id: int, bio: str | None) -> UserRead:
+        raise NotImplementedError()
 
 
 async def get_user_repo(
