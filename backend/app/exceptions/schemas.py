@@ -1,6 +1,5 @@
-from pydantic import BaseModel
-
 from app.exceptions.codes import Codes
+from pydantic import BaseModel
 
 
 class ErrorResponse(BaseModel):
@@ -15,8 +14,9 @@ class ErrorContent(BaseModel):
 
 class NotFoundErrorDetails(BaseModel):
     entity: str
-    entity_id: int
-    
+    entity_id: int | None
+
+
 class IntegrityErrorDetails(BaseModel):
     entity: str
     is_uniqueness: bool

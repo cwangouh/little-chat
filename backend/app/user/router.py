@@ -1,22 +1,19 @@
-from typing import Annotated, List
+from typing import Annotated
 
 from app.auth.utils import get_password_hash
 from app.exceptions.exceptions import NotFoundError
 from app.repository.user import UserRepository, get_user_repo
 from app.schemas import OkResponse
+from app.user.dependencies import get_current_user_by_token
 from app.user.schemas import (
     UserCreate,
-    UserCreateResponse,
-    UserPublic,
-    UserPublicWithFriends,
+    UserPublicWithContacts,
     UserRead,
-    UsersPublic,
 )
 from fastapi import APIRouter, Depends
 from starlette import status
 
 user_router = APIRouter(prefix="/user")
-users_router = APIRouter(prefix="/users")
 
 
 @user_router.post(
@@ -36,25 +33,45 @@ async def create_user(
 
 
 @user_router.get(
-    path="/{user_id}",
-    response_model=UserPublicWithFriends,
+    path="/me",
+    response_model=UserPublicWithContacts,
     status_code=status.HTTP_200_OK,
 )
-async def get_user(
-    user_id: int, user_repo: Annotated[UserRepository, Depends(get_user_repo)]
+async def get_me(
+    current_user: Annotated[UserRead, Depends(get_current_user_by_token)]
 ):
-    user = await user_repo.get_user_by_id(user_id)
+    return UserPublicWithContacts(**current_user.model_dump())
+
+
+@user_router.get(
+    path="/id/{id}",
+    response_model=UserPublicWithContacts,
+    status_code=status.HTTP_200_OK,
+)
+async def get_user_by_id(
+    _current_user: Annotated[UserRead, Depends(get_current_user_by_token)],
+    id: int,
+    user_repo: Annotated[UserRepository, Depends(get_user_repo)]
+):
+    user = await user_repo.get_user_by_id(user_id=id)
     if not user:
-        raise NotFoundError(entity="user", entity_id=user_id)
+        raise NotFoundError(entity="user", entity_id=id)
 
-    return UserPublicWithFriends(**user.model_dump())
+    return UserPublicWithContacts(**user.model_dump())
 
 
-@users_router.get(path="", response_model=UsersPublic, status_code=status.HTTP_200_OK)
-async def get_users(user_repo: Annotated[UserRepository, Depends(get_user_repo)]):
-    users: List[UserRead] = await user_repo.get_users()
-    if not users:
-        raise ValueError()  # TODO: impl err handling
+@user_router.get(
+    path="/tag/{tag}",
+    response_model=UserPublicWithContacts,
+    status_code=status.HTTP_200_OK,
+)
+async def get_user_by_tag(
+    _current_user: Annotated[UserRead, Depends(get_current_user_by_token)],
+    tag: str,
+    user_repo: Annotated[UserRepository, Depends(get_user_repo)]
+):
+    user = await user_repo.get_user_by_tag(tag=tag)
+    if not user:
+        raise NotFoundError(entity="user", entity_id=None)
 
-    users_public = [UserPublic(**u.model_dump()) for u in users]
-    return UsersPublic(users=users_public)
+    return UserPublicWithContacts(**user.model_dump())

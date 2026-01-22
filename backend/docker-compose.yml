@@ -1,18 +1,20 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:16
     restart: always
-    shm_size: 128mb
     environment:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=secret
-      - POSTGRES_DB=chatdb
-    volumes:
-      - ./pgdata:/var/lib/postgresql/data
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: chatdb
     ports:
       - "5433:5432"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d chatdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   app:
     build: .
@@ -20,9 +22,9 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - ./.env
+      - .env
     volumes:
-      # For dev purposes
       - .:/app
     depends_on:
-      - db
+      db:
+        condition: service_healthy

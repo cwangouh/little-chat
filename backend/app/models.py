@@ -1,42 +1,48 @@
-from typing import List
+from datetime import datetime, timezone
+from typing import List, Optional
 
-from sqlalchemy import Column, ForeignKey, Table
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Table
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+
+def utcnow():
+    return datetime.now(timezone.utc)
 
 
 class Base(AsyncAttrs, DeclarativeBase):
     pass
 
 
-friends_association = Table(
-    "friends_association",
+contacts_association = Table(
+    "contacts_association",
     Base.metadata,
     Column("user_id", ForeignKey("users.id"), primary_key=True),
-    Column("friend_id", ForeignKey("users.id"), primary_key=True),
+    Column("contact_id", ForeignKey("users.id"), primary_key=True),
 )
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     first_name: Mapped[str] = mapped_column(nullable=False)
     surname: Mapped[str] = mapped_column(nullable=False)
     tag: Mapped[str] = mapped_column(nullable=False, unique=True)
     password_hashed: Mapped[str] = mapped_column(nullable=False)
+    bio: Mapped[str] = mapped_column(nullable=True)
 
-    friends: Mapped[List["User"]] = relationship(
+    contacts: Mapped[List["User"]] = relationship(
         "User",
-        secondary=friends_association,
-        primaryjoin=id == friends_association.c.user_id,
-        secondaryjoin=id == friends_association.c.friend_id,
-        backref="friend_of",
+        secondary=contacts_association,
+        primaryjoin=user_id == contacts_association.c.user_id,
+        secondaryjoin=user_id == contacts_association.c.contact_id,
+        backref="contact_of",
         lazy="noload",
     )
 
-    refresh_token: Mapped["RefreshToken"] = relationship(
+    session: Mapped["Session"] = relationship(
         back_populates="user",
         uselist=False,
         cascade="all, delete-orphan",
@@ -44,13 +50,147 @@ class User(Base):
     )
 
 
-class RefreshToken(Base):
-    __tablename__ = "refresh_tokens"
+class Session(Base):
+    __tablename__ = "sessions"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    token: Mapped[str] = mapped_column(nullable=False)
+    session_id: Mapped[int] = mapped_column(
+        primary_key=True, autoincrement=True
+    )
+
+    refresh_token: Mapped[str] = mapped_column(
+        String(255), nullable=False
+    )
+
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utcnow,
+        nullable=False,
+    )
 
     user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False
+        ForeignKey("users.user_id"), nullable=False
     )
-    user: Mapped["User"] = relationship(back_populates="refresh_token", lazy="noload")
+
+    user: Mapped["User"] = relationship(
+        back_populates="session", lazy="noload")
+
+
+class Conversation(Base):
+    __tablename__ = "conversations"
+
+    conversation_id: Mapped[int] = mapped_column(
+        primary_key=True, autoincrement=True
+    )
+
+    type: Mapped[str] = mapped_column(
+        String(400), nullable=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utcnow,
+        nullable=False,
+    )
+
+    title: Mapped[Optional[str]] = mapped_column(String(255))
+
+
+class Chat(Base):
+    __tablename__ = "chats"
+
+    conversation_id: Mapped[int] = mapped_column(
+        ForeignKey("conversations.conversation_id"),
+        primary_key=True,
+    )
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.user_id"),
+        nullable=False
+    )
+
+    user_id2: Mapped[int] = mapped_column(
+        ForeignKey("users.user_id"),
+        nullable=False
+    )
+
+    conversation: Mapped["Conversation"] = relationship(lazy="noload")
+
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    message_id: Mapped[int] = mapped_column(
+        primary_key=True, autoincrement=True
+    )
+
+    text: Mapped[str] = mapped_column(
+        String(2047), nullable=False
+    )
+
+    is_edited: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utcnow,
+        nullable=False,
+    )
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.user_id"),
+        nullable=False
+    )
+
+    conversation_id: Mapped[int] = mapped_column(
+        ForeignKey("conversations.conversation_id"),
+        nullable=False
+    )
+
+    user: Mapped["User"] = relationship(lazy="noload")
+    conversation: Mapped["Conversation"] = relationship(
+        back_populates="conversations",
+        uselist=True,
+        cascade="all, delete-orphan",
+        lazy="noload"
+    )
+
+
+class Reaction(Base):
+    __tablename__ = "reactions"
+
+    reaction_id: Mapped[int] = mapped_column(
+        primary_key=True, autoincrement=True
+    )
+
+    reaction_type: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utcnow,
+        nullable=False,
+    )
+
+    message_id: Mapped[int] = mapped_column(
+        ForeignKey("messages.message_id"),
+        nullable=False
+    )
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.user_id"),
+        nullable=False
+    )
+
+    message: Mapped["Message"] = relationship(
+        back_populates="reactions",
+        uselist=True,
+        cascade="all, delete-orphan",
+        lazy="noload"
+    )
+    user: Mapped["User"] = relationship(lazy="noload")

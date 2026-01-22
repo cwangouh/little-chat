@@ -1,15 +1,14 @@
 from typing import Annotated, List
 
+from app.db import get_async_session
+from app.exceptions.exceptions import IntegrityError
+from app.models import User
+from app.user.schemas import UserCreateResponse, UserRead
 from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError as SQLAlchemyIntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
-from app.db import get_async_session
-from app.exceptions.exceptions import IntegrityError
-from app.models import User
-from app.user.schemas import UserCreateResponse, UserRead
 
 
 class UserRepository:
@@ -34,16 +33,20 @@ class UserRepository:
         return UserCreateResponse.model_validate(user, from_attributes=True)
 
     async def get_user_by_id(self, user_id: int) -> UserRead | None:
-        q = select(User).options(selectinload(User.friends)).where(User.id == user_id)
-        coro = await self.session.execute(q)
-        user = coro.scalar()
-        if user is None:
-            return None
+        q = select(User).options(selectinload(
+            User.contacts)).where(User.id == user_id)
+        async with self.session.begin():
+            coro = await self.session.execute(q)
+
+            user = coro.scalar()
+            if user is None:
+                return None
 
         return UserRead.model_validate(user, from_attributes=True)
 
     async def get_user_by_tag(self, tag: str) -> UserRead | None:
-        q = select(User).options(selectinload(User.friends)).where(User.tag == tag)
+        q = select(User).options(selectinload(
+            User.contacts)).where(User.tag == tag)
         async with self.session.begin():
             coro = await self.session.execute(q)
 

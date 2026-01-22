@@ -1,7 +1,10 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import ValidationError
+
+# from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.auth.router import auth_router
@@ -13,12 +16,13 @@ from app.exceptions.handlers import (
     handle_http_exception,
     handle_request_validation_error,
     handle_sqlalchemy_error,
-    handle_validation_error,
+    # handle_validation_error,
     handle_value_error,
 )
-from app.user.router import user_router, users_router
+from app.user.router import user_router
 
 
+@asynccontextmanager
 async def lifespan(app: FastAPI):
     await start_db()
     yield
@@ -48,7 +52,6 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(user_router)
-app.include_router(users_router)
 
 
 app.exception_handler(AppException)(handle_app_exception)

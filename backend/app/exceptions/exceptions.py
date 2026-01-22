@@ -1,7 +1,5 @@
 from typing import Any
 
-from starlette import status
-
 from app.exceptions.codes import Codes
 from app.exceptions.schemas import (
     ErrorContent,
@@ -9,6 +7,7 @@ from app.exceptions.schemas import (
     IntegrityErrorDetails,
     NotFoundErrorDetails,
 )
+from starlette import status
 
 
 class AppException(Exception):
@@ -17,7 +16,7 @@ class AppException(Exception):
 
     def __init__(
         self,
-        code: str,
+        code: Codes,
         message: str,
         status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
         details: dict | None = None,
@@ -51,7 +50,7 @@ class InvalidTokenException(AppException):
 
 
 class NotFoundError(AppException):
-    def __init__(self, entity: str, entity_id: int):
+    def __init__(self, entity: str, entity_id: int | None):
         details = NotFoundErrorDetails(entity=entity, entity_id=entity_id)
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -79,7 +78,8 @@ class IntegrityError(AppException):
                 f"Cannot derive the constraint violated: unexpected error type {type(orig).__name__}"
             )
 
-        details = IntegrityErrorDetails(entity=entity, is_uniqueness=is_uniqueness)
+        details = IntegrityErrorDetails(
+            entity=entity, is_uniqueness=is_uniqueness)
         super().__init__(
             status_code=status.HTTP_409_CONFLICT,
             code=Codes.INTEGRITY_ERROR,

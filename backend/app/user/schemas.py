@@ -1,9 +1,8 @@
 import re
 from typing import List, Optional
 
-from pydantic import Field
-
 from app.schemas import GeneralSchema, IdCreateResponse
+from pydantic import Field
 
 # --- User --- #
 
@@ -27,7 +26,7 @@ class UserCreateResponse(IdCreateResponse):
 class UserRead(UserBase):
     id: int
     password_hashed: str
-    friends: List["UserRead"]
+    contacts: List["UserRead"]
 
 
 class UserUpdate(GeneralSchema):
@@ -44,8 +43,8 @@ class UserPublic(UserBase):
     id: int
 
 
-class UserPublicWithFriends(UserPublic):
-    friends: List["UserRead"]
+class UserPublicWithContacts(UserPublic):
+    contacts: List["UserPublic"]
 
 
 # --- Users --- #
@@ -55,10 +54,5 @@ class UsersPublic(GeneralSchema):
     users: List[UserPublic]
 
 
-class UsersPublicWithFriends(GeneralSchema):
-    users: List[UserPublicWithFriends]
-
-
-# --- Friends --- #
-
-# TODO:
+class UsersPublicWithContacts(GeneralSchema):
+    users: List[UserPublicWithContacts]
