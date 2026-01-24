@@ -20,8 +20,9 @@ from app.exceptions.handlers import (
     # handle_validation_error,
     handle_value_error,
 )
-from app.message.router import message_router
+from app.message.router import message_router, reaction_router
 from app.user.router import user_router
+from app.websocket.router import ws_router
 
 
 @asynccontextmanager
@@ -35,7 +36,6 @@ app = FastAPI(
     title="Little chat",
     description="For studying purposes",
     version="0.0.1",
-    root_path="/api/v1",
     lifespan=lifespan,
 )
 
@@ -52,10 +52,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router)
-app.include_router(user_router)
-app.include_router(chat_router)
-app.include_router(message_router)
+app.include_router(auth_router, prefix="/api/v1")
+app.include_router(user_router, prefix="/api/v1")
+app.include_router(chat_router, prefix="/api/v1")
+app.include_router(message_router, prefix="/api/v1")
+app.include_router(reaction_router, prefix="/api/v1")
+app.include_router(ws_router)
 
 
 app.exception_handler(AppException)(handle_app_exception)

@@ -95,26 +95,25 @@ class MessageRepository:
 
         return MessagePublic.model_validate(message)
 
-
-async def delete_message(
-    self,
-    message_id: int,
-    user_id: int,
-) -> None:
-    stmt = (
-        delete(Message)
-        .where(
-            Message.message_id == message_id,
-            Message.user_id == user_id,
+    async def delete_message(
+        self,
+        message_id: int,
+        user_id: int,
+    ) -> None:
+        stmt = (
+            delete(Message)
+            .where(
+                Message.message_id == message_id,
+                Message.user_id == user_id,
+            )
         )
-    )
 
-    try:
-        async with self.session.begin():
-            await self.session.execute(stmt)
+        try:
+            async with self.session.begin():
+                await self.session.execute(stmt)
 
-    except SQLAlchemyIntegrityError as ie:
-        raise IntegrityError(entity="message", orig=ie.orig) from ie
+        except SQLAlchemyIntegrityError as ie:
+            raise IntegrityError(entity="message", orig=ie.orig) from ie
 
 
 async def get_message_repo(

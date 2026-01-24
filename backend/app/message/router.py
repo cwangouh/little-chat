@@ -11,8 +11,11 @@ from app.message.schemas import (
 from app.repository.chat import ChatRepository, get_chat_repo
 from app.repository.message import MessageRepository, get_message_repo
 from app.repository.reaction import ReactionRepository, get_reaction_repo
+from app.schemas import OkResponse
 from app.user.dependencies import get_current_user_by_token
 from app.user.schemas import UserRead
+from app.websocket.events import WSEventType
+from app.websocket.manager import ws_manager
 from fastapi import APIRouter, Depends
 from starlette import status
 
@@ -43,11 +46,22 @@ async def send_message(
             code=Codes.NO_ACCESS,
         )
 
-    return await message_repo.create_message(
+    message_public = await message_repo.create_message(
         conversation_id=chat_id,
         user_id=current_user.user_id,
         text=data.text,
     )
+
+    for user_id in (chat.user_id, chat.user_id2):
+        await ws_manager.send_to_user(
+            user_id,
+            {
+                "type": "message.created",
+                "payload": MessagePublic.model_validate(message_public).model_dump(),
+            }
+        )
+
+    return message_public
 
 
 @message_router.get(
@@ -112,11 +126,22 @@ async def edit_message(
             code=Codes.NO_ACCESS,
         )
 
-    return await message_repo.edit_message(
+    message_public = await message_repo.edit_message(
         message_id=message_id,
         user_id=current_user.user_id,
         new_text=data.text,
     )
+
+    for user_id in (chat.user_id, chat.user_id2):
+        await ws_manager.send_to_user(
+            user_id,
+            {
+                "type": WSEventType.MESSAGE_UPDATED,
+                "payload": message_public.model_dump(),
+            }
+        )
+
+    return message_public
 
 
 @message_router.delete(
@@ -157,10 +182,20 @@ async def delete_message(
         user_id=current_user.user_id,
     )
 
+    for user_id in (chat.user_id, chat.user_id2):
+        await ws_manager.send_to_user(
+            user_id,
+            {
+                "type": WSEventType.MESSAGE_DELETED,
+                "payload": {"message_id": message_id},
+            }
+        )
+
 
 @reaction_router.post(
     path="",
     status_code=status.HTTP_201_CREATED,
+    response_model=OkResponse,
 )
 async def add_reaction(
     message_id: int,
@@ -190,6 +225,21 @@ async def add_reaction(
         user_id=current_user.user_id,
         reaction_type=data.reaction_type,
     )
+
+    for user_id in (chat.user_id, chat.user_id2):
+        await ws_manager.send_to_user(
+            user_id,
+            {
+                "type": WSEventType.REACTION_ADDED,
+                "payload": {
+                    "message_id": message_id,
+                    "user_id": current_user.user_id,
+                    "reaction_type": data.reaction_type,
+                },
+            }
+        )
+
+    return OkResponse(ok=True)
 
 
 @reaction_router.delete(
@@ -222,3 +272,15 @@ async def remove_reaction(
         message_id=message_id,
         user_id=current_user.user_id,
     )
+
+    for user_id in (chat.user_id, chat.user_id2):
+        await ws_manager.send_to_user(
+            user_id,
+            {
+                "type": WSEventType.REACTION_REMOVED,
+                "payload": {
+                    "message_id": message_id,
+                    "user_id": current_user.user_id,
+                },
+            }
+        )

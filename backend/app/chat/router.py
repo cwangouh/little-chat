@@ -1,16 +1,13 @@
 from typing import Annotated
 
-from app.chat.schemas import ChatPublic, CreateChatRequest, MessagePublic
+from app.chat.schemas import ChatPublic, CreateChatRequest
 from app.exceptions.codes import Codes
 from app.exceptions.exceptions import AppException, NotFoundError
 from app.repository.chat import ChatRepository, get_chat_repo
-from app.repository.message import MessageRepository, get_message_repo
 from app.repository.user import UserRepository, get_user_repo
 from app.schemas import OkResponse
 from app.user.dependencies import get_current_user_by_token
-from app.user.schemas import (
-    UserRead,
-)
+from app.user.schemas import UserRead
 from fastapi import APIRouter, Depends
 from starlette import status
 
