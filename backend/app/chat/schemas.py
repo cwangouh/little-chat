@@ -6,15 +6,11 @@ class CreateChatRequest(GeneralSchema):
     tag: str
 
 
-class CreateChatResponse(GeneralSchema):
+class ChatPublic(GeneralSchema):
     conversation_id: int
-
-
-class ChatPreview(GeneralSchema):
-    conversation_id: int
-    title: str
-    # last_message: str | None
-    # last_message_at: str | None
+    title: str | None
+    user_id: int
+    user_id2: int
 
 
 class MessagePublic(GeneralSchema):

@@ -1,11 +1,11 @@
 from typing import Annotated, List
 
 from app.db import get_async_session
-from app.exceptions.exceptions import IntegrityError
-from app.models import User
+from app.exceptions.exceptions import IntegrityError, NotFoundError
+from app.models import User, contacts_association
 from app.user.schemas import UserCreateResponse, UserRead
 from fastapi import Depends
-from sqlalchemy import select
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import IntegrityError as SQLAlchemyIntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -56,20 +56,53 @@ class UserRepository:
 
         return UserRead.model_validate(user, from_attributes=True)
 
-    async def get_users(self) -> List[UserRead] | None:
-        q = select(User)
-        coro = await self.session.execute(q)
-        users = coro.scalars().all()
-        return [UserRead.model_validate(u, from_attributes=True) for u in users]
-
     async def add_contact(self, user_id: int, contact_id: int) -> None:
-        raise NotImplementedError()
+        stmt = insert(contacts_association).values(
+            user_id=user_id,
+            contact_id=contact_id,
+        )
+
+        try:
+            await self.session.execute(stmt)
+            await self.session.commit()
+        except SQLAlchemyIntegrityError:
+            await self.session.rollback()
 
     async def delete_contact(self, user_id: int, contact_id: int) -> None:
-        raise NotImplementedError()
+        stmt = (
+            delete(contacts_association)
+            .where(
+                contacts_association.c.user_id == user_id,
+                contacts_association.c.contact_id == contact_id,
+            )
+        )
+
+        try:
+            async with self.session.begin():
+                await self.session.execute(stmt)
+        except SQLAlchemyIntegrityError as ie:
+            raise IntegrityError(entity="contact", orig=ie.orig) from ie
 
     async def update_user(self, user_id: int, bio: str | None) -> UserRead:
-        raise NotImplementedError()
+        stmt = (
+            update(User)
+            .where(User.user_id == user_id)
+            .values(bio=bio)
+            .returning(User)
+        )
+
+        try:
+            async with self.session.begin():
+                result = await self.session.execute(stmt)
+                user = result.scalar_one_or_none()
+
+                if user is None:
+                    raise NotFoundError(entity="user", entity_id=user_id)
+
+        except SQLAlchemyIntegrityError as ie:
+            raise IntegrityError(entity="user", orig=ie.orig) from ie
+
+        return UserRead.model_validate(user, from_attributes=True)
 
 
 async def get_user_repo(

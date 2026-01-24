@@ -20,6 +20,7 @@ from app.exceptions.handlers import (
     # handle_validation_error,
     handle_value_error,
 )
+from app.message.router import message_router
 from app.user.router import user_router
 
 
@@ -54,6 +55,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(chat_router)
+app.include_router(message_router)
 
 
 app.exception_handler(AppException)(handle_app_exception)

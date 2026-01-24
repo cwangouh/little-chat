@@ -1,7 +1,8 @@
 from typing import Annotated
 
 from app.auth.utils import get_password_hash
-from app.exceptions.exceptions import NotFoundError
+from app.exceptions.codes import Codes
+from app.exceptions.exceptions import AppException, NotFoundError
 from app.repository.user import UserRepository, get_user_repo
 from app.schemas import OkResponse
 from app.user.dependencies import get_current_user_by_token
@@ -81,7 +82,8 @@ async def get_user_by_tag(
 
 @user_router.post(
     "/contacts/tag/{tag}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
+    response_model=OkResponse,
 )
 async def add_contact(
     tag: str,
@@ -92,15 +94,25 @@ async def add_contact(
     if not user:
         raise NotFoundError(entity="user", entity_id=None)
 
+    if current_user.user_id == user.user_id:
+        raise AppException(
+            status_code=400,
+            message="Cannot add yourself as a contact",
+            code=Codes.INVALID_OPERATION,
+        )
+
     await user_repo.add_contact(
         user_id=current_user.user_id,
         contact_id=user.user_id,
     )
 
+    return OkResponse(ok=True)
+
 
 @user_router.delete(
     "/contacts/{tag}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
+    response_model=OkResponse,
 )
 async def remove_contact(
     tag: str,
@@ -115,6 +127,8 @@ async def remove_contact(
         user_id=current_user.user_id,
         contact_id=user.user_id,
     )
+
+    return OkResponse(ok=True)
 
 
 @user_router.patch(

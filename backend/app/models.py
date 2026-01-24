@@ -111,7 +111,10 @@ class Chat(Base):
     __tablename__ = "chats"
 
     conversation_id: Mapped[int] = mapped_column(
-        ForeignKey("conversations.conversation_id"),
+        ForeignKey(
+            "conversations.conversation_id",
+            ondelete="CASCADE",
+        ),
         primary_key=True,
     )
 
@@ -125,7 +128,10 @@ class Chat(Base):
         nullable=False
     )
 
-    conversation: Mapped["Conversation"] = relationship(lazy="noload")
+    conversation: Mapped["Conversation"] = relationship(
+        passive_deletes=True,
+        lazy="noload"
+    )
 
 
 class Message(Base):
