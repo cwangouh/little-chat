@@ -64,7 +64,7 @@ export const FormContainer: React.FC<FormContainerProps> = ({
     children,
 }) => {
     return (
-        <div className="max-w-sm mx-auto bg-amber-100 rounded-2xl shadow-md p-6">
+        <div className="mt-5 max-w-sm mx-auto bg-amber-100 rounded-2xl shadow-md p-6">
             <h3 className="text-xl font-bold underline mb-4 text-center">{title}</h3>
             {children}
         </div>

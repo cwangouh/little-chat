@@ -1,10 +1,10 @@
 import { createBrowserRouter } from "react-router-dom";
 import App from "./App";
-import ChatPanel, { ChatPanelPlaceholder } from "./components/chat/ChatPanel";
-import ChatScreen from "./components/chat/ChatScreen";
+import ChatPanel, { ChatPanelPlaceholder } from "./components/chat/panel/ChatPanel";
+import ChatScreen from "./components/chat/panel/ChatScreen";
 import LoginForm from "./components/forms/Login";
 import SingUpForm from "./components/forms/SignUp";
-import { signUpAction } from "./fetches/signup";
+import { loginAction, logoutAction, signUpAction } from "./fetches/auth";
 
 export const router = createBrowserRouter([
     {
@@ -14,6 +14,7 @@ export const router = createBrowserRouter([
             {
                 index: true,
                 element: <LoginForm />,
+                action: loginAction
             },
             {
                 path: "signup",
@@ -34,6 +35,10 @@ export const router = createBrowserRouter([
                     }
                 ]
             },
+            {
+                path: "logout",
+                action: logoutAction
+            }
         ],
     },
 ]);

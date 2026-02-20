@@ -11,6 +11,12 @@ export const Codes = {
     INTEGRITY_ERROR: 7,
     INVALID_TOKEN: 8,
     INCORRECT_CREDENTIALS: 9,
+    NO_ACCESS: 10,
+    INVALID_OPERATION: 11,
+
+    CHAT_ALREADY_EXISTS: 1001,
+    CANNOT_CREATE_CHAT_WITH_YOURSELF: 1002
+
 } as const;
 
 export type Code = (typeof Codes)[keyof typeof Codes];
