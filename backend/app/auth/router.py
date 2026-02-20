@@ -54,7 +54,7 @@ async def generate_access_and_refresh_tokens(
         data={"sub": user.tag}, expires_delta=access_token_expires
     )
 
-    response = Response()
+    response = Response(status_code=status.HTTP_201_CREATED)
     response.set_cookie(
         key="jwt", value=f"Bearer {access_token}", httponly=True)
     return response
@@ -96,7 +96,7 @@ async def get_refresh_token(
             data={"sub": tag}, expires_delta=access_token_expires
         )
 
-        response = Response()
+        response = Response(status_code=status.HTTP_201_CREATED)
         response.set_cookie(
             key="jwt", value=f"Bearer {access_token}", httponly=True)
         return response

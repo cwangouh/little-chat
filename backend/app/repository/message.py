@@ -1,13 +1,14 @@
 from typing import Annotated
 
-from app.chat.schemas import MessagePublic
 from app.db import get_async_session
 from app.exceptions.exceptions import IntegrityError, NotFoundError
+from app.message.schemas import MessagePublic
 from app.models import Message
 from fastapi import Depends
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError as SQLAlchemyIntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 
 class MessageRepository:
@@ -24,7 +25,7 @@ class MessageRepository:
             if not res:
                 return None
 
-        return MessagePublic.model_validate(res)
+        return MessagePublic.model_validate(res, from_attributes=True)
 
     async def get_messages_by_chat_id(
         self,
@@ -32,6 +33,9 @@ class MessageRepository:
     ) -> list[MessagePublic]:
         stmt = (
             select(Message)
+            .options(
+                selectinload(Message.reactions)
+            )
             .where(Message.conversation_id == conversation_id)
             .order_by(Message.created_at.asc())
         )
@@ -40,7 +44,7 @@ class MessageRepository:
             result = await self.session.execute(stmt)
             messages = result.scalars().all()
 
-        return [MessagePublic.model_validate(m) for m in messages]
+        return [MessagePublic.model_validate(m, from_attributes=True) for m in messages]
 
     async def create_message(
         self,
@@ -60,7 +64,7 @@ class MessageRepository:
                 await self.session.flush()   # получаем message_id
                 await self.session.refresh(message)
 
-            return MessagePublic.model_validate(message)
+            return MessagePublic.model_validate(message, from_attributes=True)
         except SQLAlchemyIntegrityError as ie:
             raise IntegrityError(entity="message", orig=ie.orig) from ie
 
@@ -93,7 +97,7 @@ class MessageRepository:
         except SQLAlchemyIntegrityError as ie:
             raise IntegrityError(entity="message", orig=ie.orig) from ie
 
-        return MessagePublic.model_validate(message)
+        return MessagePublic.model_validate(message, from_attributes=True)
 
     async def delete_message(
         self,

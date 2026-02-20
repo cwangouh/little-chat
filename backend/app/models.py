@@ -161,7 +161,10 @@ class Message(Base):
     )
 
     conversation_id: Mapped[int] = mapped_column(
-        ForeignKey("conversations.conversation_id"),
+        ForeignKey(
+            "conversations.conversation_id",
+            ondelete="CASCADE"
+        ),
         nullable=False
     )
 
@@ -196,7 +199,10 @@ class Reaction(Base):
     )
 
     message_id: Mapped[int] = mapped_column(
-        ForeignKey("messages.message_id"),
+        ForeignKey(
+            "messages.message_id",
+            ondelete="CASCADE"
+        ),
         nullable=False
     )
 

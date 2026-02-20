@@ -9,5 +9,8 @@ class WSEventType(str, Enum):
     REACTION_ADDED = "reaction.added"
     REACTION_REMOVED = "reaction.removed"
 
+    CHAT_CREATED = "chat.created"
+    CHAT_DELETED = "chat.deleted"
+
     NOTIFICATION = "notification"
     ERROR = "error"

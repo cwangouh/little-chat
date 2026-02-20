@@ -7,7 +7,6 @@ from pydantic import Field
 
 
 class MessageCreate(GeneralSchema):
-    conversation_id: int = Field(...)
     text: str = Field(
         ...,
         min_length=1,
@@ -27,8 +26,8 @@ class ReactionType(str, Enum):
     LIKE = "like"
     LAUGH = "laugh"
     SAD = "sad"
-    ANGRY = "angry"
-    FIRE = "fire"
+    HEART = "heart"
+    EMBARRASSED = "embarrassed"
 
 
 class ReactionCreate(GeneralSchema):
@@ -36,7 +35,9 @@ class ReactionCreate(GeneralSchema):
 
 
 class ReactionPublic(GeneralSchema):
+    reaction_id: int
     reaction_type: ReactionType
+    message_id: int
     user_id: int
 
     class Config:
@@ -45,13 +46,11 @@ class ReactionPublic(GeneralSchema):
 
 class MessagePublic(GeneralSchema):
     message_id: int
-    conversation_id: int
-    user_id: int
-
     text: str
-    is_edited: bool
+    user_id: int
     created_at: datetime
-
+    is_edited: bool
+    conversation_id: int
     reactions: List[ReactionPublic] = []
 
     class Config:

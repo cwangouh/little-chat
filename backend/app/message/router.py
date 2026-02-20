@@ -55,10 +55,8 @@ async def send_message(
     for user_id in (chat.user_id, chat.user_id2):
         await ws_manager.send_to_user(
             user_id,
-            {
-                "type": "message.created",
-                "payload": MessagePublic.model_validate(message_public).model_dump(),
-            }
+            event_type=WSEventType.MESSAGE_CREATED,
+            str_payload=message_public.model_dump_json(),
         )
 
     return message_public
@@ -135,10 +133,8 @@ async def edit_message(
     for user_id in (chat.user_id, chat.user_id2):
         await ws_manager.send_to_user(
             user_id,
-            {
-                "type": WSEventType.MESSAGE_UPDATED,
-                "payload": message_public.model_dump(),
-            }
+            event_type=WSEventType.MESSAGE_UPDATED,
+            str_payload=message_public.model_dump_json(),
         )
 
     return message_public
@@ -149,7 +145,6 @@ async def edit_message(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_message(
-    chat_id: int,
     message_id: int,
     current_user: Annotated[UserRead, Depends(get_current_user_by_token)],
     message_repo: Annotated[MessageRepository, Depends(get_message_repo)],
@@ -185,10 +180,8 @@ async def delete_message(
     for user_id in (chat.user_id, chat.user_id2):
         await ws_manager.send_to_user(
             user_id,
-            {
-                "type": WSEventType.MESSAGE_DELETED,
-                "payload": {"message_id": message_id},
-            }
+            event_type=WSEventType.MESSAGE_DELETED,
+            payload={"message_id": message_id},
         )
 
 
@@ -220,7 +213,7 @@ async def add_reaction(
             code=Codes.NO_ACCESS,
         )
 
-    await reaction_repo.add_reaction(
+    reaction_public = await reaction_repo.add_reaction(
         message_id=message_id,
         user_id=current_user.user_id,
         reaction_type=data.reaction_type,
@@ -229,25 +222,20 @@ async def add_reaction(
     for user_id in (chat.user_id, chat.user_id2):
         await ws_manager.send_to_user(
             user_id,
-            {
-                "type": WSEventType.REACTION_ADDED,
-                "payload": {
-                    "message_id": message_id,
-                    "user_id": current_user.user_id,
-                    "reaction_type": data.reaction_type,
-                },
-            }
+            event_type=WSEventType.REACTION_ADDED,
+            payload=reaction_public.model_dump(),
         )
 
     return OkResponse(ok=True)
 
 
 @reaction_router.delete(
-    path="",
+    path="/{reaction_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def remove_reaction(
     message_id: int,
+    reaction_id: int,
     current_user: Annotated[UserRead, Depends(get_current_user_by_token)],
     reaction_repo: Annotated[ReactionRepository, Depends(get_reaction_repo)],
     chat_repo: Annotated[ChatRepository, Depends(get_chat_repo)],
@@ -268,19 +256,29 @@ async def remove_reaction(
             code=Codes.NO_ACCESS,
         )
 
+    reaction = await reaction_repo.get_reaction_by_id(reaction_id)
+    if not reaction:
+        raise NotFoundError("reaction", reaction_id)
+
+    if reaction.user_id != current_user.user_id:
+        raise AppException(
+            status_code=403,
+            message="You can remove only your own reactions",
+            code=Codes.NO_ACCESS,
+        )
+
     await reaction_repo.remove_reaction(
         message_id=message_id,
         user_id=current_user.user_id,
+        reaction_id=reaction_id,
     )
 
     for user_id in (chat.user_id, chat.user_id2):
         await ws_manager.send_to_user(
             user_id,
-            {
-                "type": WSEventType.REACTION_REMOVED,
-                "payload": {
-                    "message_id": message_id,
-                    "user_id": current_user.user_id,
-                },
-            }
+            event_type=WSEventType.REACTION_REMOVED,
+            payload={
+                "message_id": message_id,
+                "user_id": current_user.user_id,
+            },
         )
