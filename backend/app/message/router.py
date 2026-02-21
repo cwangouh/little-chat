@@ -16,6 +16,10 @@ from app.user.dependencies import get_current_user_by_token
 from app.user.schemas import UserRead
 from app.websocket.events import WSEventType
 from app.websocket.manager import ws_manager
+from app.websocket.schemas import (
+    NewMessageNotificationPayload,
+    NewReactionNotificationPayload,
+)
 from fastapi import APIRouter, Depends
 from starlette import status
 
@@ -57,6 +61,21 @@ async def send_message(
             user_id,
             event_type=WSEventType.MESSAGE_CREATED,
             str_payload=message_public.model_dump_json(),
+        )
+
+    notification = NewMessageNotificationPayload(
+        chat_name=chat.title or "",
+        sender_tag=current_user.tag,
+        text=data.text,
+    )
+    for user_id in (chat.user_id, chat.user_id2):
+        if user_id == current_user.user_id:
+            continue
+
+        await ws_manager.send_to_user(
+            user_id,
+            event_type=WSEventType.NOTIFICATION,
+            payload=notification.model_dump(),
         )
 
     return message_public
@@ -226,6 +245,23 @@ async def add_reaction(
             payload=reaction_public.model_dump(),
         )
 
+    notification = NewReactionNotificationPayload(
+        chat_name=chat.title or "",
+        sender_tag=current_user.tag,
+        reaction_type=data.reaction_type,
+    )
+
+    if message.user_id != current_user.user_id:
+        for user_id in (chat.user_id, chat.user_id2):
+            if user_id != message.user_id:
+                continue
+
+            await ws_manager.send_to_user(
+                user_id,
+                event_type=WSEventType.NOTIFICATION,
+                payload=notification.model_dump(),
+            )
+
     return OkResponse(ok=True)
 
 
@@ -280,5 +316,6 @@ async def remove_reaction(
             payload={
                 "message_id": message_id,
                 "user_id": current_user.user_id,
+                "reaction_id": reaction_id,
             },
         )
