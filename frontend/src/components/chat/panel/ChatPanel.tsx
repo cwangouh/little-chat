@@ -67,7 +67,6 @@ export const Conversation: React.FC<ConversationProps> = ({
         );
     }
 
-    console.log("Rendering Conversation with messages", messages);
 
     return (
         <div className="h-full px-4 py-3 overflow-y-auto bg-gray-50">

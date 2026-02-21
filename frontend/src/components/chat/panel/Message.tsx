@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import React, { useRef, useState } from 'react';
 import { getEmojiByReactionType, useMessages, type Reaction } from '../../../contexts/MessageContext';
+import { useUser } from '../../../contexts/UserContext';
 import { MessageContextMenu } from './MessageContextMenu';
 
 export const formatMessageTime = (timestamp: string): string => {
@@ -34,7 +35,8 @@ const Message: React.FC<MessageProps> = ({
 }) => {
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
     const messageRef = useRef<HTMLDivElement>(null);
-    const { addReaction } = useMessages();
+    const { addReaction, removeReaction } = useMessages();
+    const { currentUser } = useUser();
 
     const handleContextMenu = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -61,21 +63,28 @@ const Message: React.FC<MessageProps> = ({
                         ? "bg-blue-500 text-white rounded-br-none"
                         : "bg-amber-100 text-gray-800 rounded-bl-none"
                 )}>
-                    <div>
+                    <div className='w-full'>
                         {children}
                         {reactions.length > 0 && (
                             <div className={clsx(
                                 "flex items-center gap-1 mt-1 flex-wrap",
                                 is_my ? "justify-end" : "justify-start"
                             )}>
-                                {reactions.map((reaction) => (
-                                    <div
-                                        key={reaction.reaction_id}
-                                        className="flex items-center gap-1 text-xs bg-white border border-gray-200 px-1 rounded"
-                                    >
-                                        <span>{getEmojiByReactionType(reaction.reaction_type)}</span>
-                                    </div>
-                                ))}
+                                {reactions.map((reaction) => {
+                                    const isOwnReaction = reaction.user_id === currentUser?.user_id;
+                                    return (
+                                        <div
+                                            key={reaction.reaction_id}
+                                            className={clsx(
+                                                "flex items-center gap-1 text-xs bg-white border border-gray-200 px-1 rounded",
+                                                isOwnReaction ? "hover:bg-gray-200 cursor-pointer" : "cursor-default"
+                                            )}
+                                            onClick={() => isOwnReaction && removeReaction(messageId, reaction.reaction_id)}
+                                        >
+                                            <span>{getEmojiByReactionType(reaction.reaction_type)}</span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -85,20 +94,17 @@ const Message: React.FC<MessageProps> = ({
                             const rect = messageRef.current?.getBoundingClientRect();
                             if (rect) {
                                 setContextMenu({
-                                    x: rect.left + 200,
+                                    x: is_my ? rect.left + 200 : rect.right,
                                     y: rect.top
                                 });
                             }
                         }}
-                        className="
-                            opacity-0 group-hover:opacity-100
-                            absolute -right-6 top-1/2 -translate-y-1/2
-                            w-6 h-6 flex items-center justify-center
-                            bg-gray-200 hover:bg-gray-300
-                            rounded-full text-gray-600
-                            transition-all duration-200
-                            text-sm
-                        "
+                        className={clsx("opacity-0 group-hover:opacity-100",
+                            "absolute top-1/2 -translate-y-1/2",
+                            is_my ? "-right-7" : "-left-7",
+                            "w-6 h-6 flex items-center justify-center",
+                            "bg-gray-200 hover:bg-gray-300 rounded-full",
+                            "text-gray-600 transition-all duration-200 text-sm")}
                     >
                         ⋮
                     </button>
@@ -210,14 +216,14 @@ export const TextMessage: React.FC<TextMessageProps> = ({
                         </div>
 
                         <div className={clsx(
-                            "flex items-center text-xs",
+                            "flex flex-row items-center text-xs",
                             is_my ? "text-blue-100" : "text-gray-500"
                         )}>
                             {is_edited && (
                                 <span className="italic mr-1">edited</span>
                             )}
                             {created_at && (
-                                <span>{formattedTime}</span>
+                                <span className={clsx(is_edited ? "grow-1 text-right" : "")}>{formattedTime}</span>
                             )}
                         </div>
                     </>
