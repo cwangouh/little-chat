@@ -12,7 +12,7 @@ ALPHA_NUM_LATIN = re.compile("[a-zA-Z0-9]*")
 class UserBase(GeneralSchema):
     first_name: str = Field(min_length=1, max_length=40)
     surname: str = Field(min_length=1, max_length=40)
-    tag: str = Field(min_length=4, max_length=20, pattern=ALPHA_NUM_LATIN)
+    tag: str = Field(min_length=4, max_length=30, pattern=ALPHA_NUM_LATIN)
     bio: str | None = Field(min_length=0, max_length=100)
 
 

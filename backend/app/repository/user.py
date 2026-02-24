@@ -32,6 +32,17 @@ class UserRepository:
 
         return UserCreateResponse.model_validate(user, from_attributes=True)
 
+    async def delete_user_by_tag(self, tag: str) -> None:
+        stmt = delete(User).where(User.tag == tag)
+
+        try:
+            async with self.session.begin():
+                result = await self.session.execute(stmt)
+                if result.rowcount == 0:
+                    raise NotFoundError(entity="user", entity_id=None)
+        except SQLAlchemyIntegrityError as ie:
+            raise IntegrityError(entity="user", orig=ie.orig) from ie
+
     async def get_user_by_id(self, user_id: int) -> UserRead | None:
         q = select(User).options(selectinload(
             User.contacts)).where(User.user_id == user_id)

@@ -80,6 +80,22 @@ async def get_user_by_tag(
     return UserPublicWithContacts(**user.model_dump())
 
 
+@user_router.delete(
+    path="/tag/{tag}",
+    response_model=OkResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def delete_user_by_tag(
+    tag: str,
+    user_repo: Annotated[UserRepository, Depends(get_user_repo)]
+):
+    user = await user_repo.delete_user_by_tag(tag=tag)
+    if not user:
+        raise NotFoundError(entity="user", entity_id=None)
+
+    return OkResponse(ok=True)
+
+
 @user_router.post(
     "/contacts/tag/{tag}",
     status_code=status.HTTP_200_OK,
